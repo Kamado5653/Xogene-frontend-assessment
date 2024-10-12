@@ -35,3 +35,11 @@ export async function getDrugByName(rxcui_name: string) {
   }
   return resp.json();
 }
+
+export async function getRelatedRxcuiInfo(rxcui: string) {
+  const resp = await fetch(getUrl(`/REST/rxcui/${rxcui}/allrelated.json`));
+  if (resp.status != 200) {
+    throw new Error(resp.statusText);
+  }
+  return resp.json();
+}

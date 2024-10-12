@@ -1,30 +1,51 @@
-import { useEffect, useState } from "react";
-// import ComboBox from "../components/ComboBox";
-import useApi from "../hooks/useApi";
-import { searchDrugByKeyword } from "../api/searchDrugs";
+import { useRef, useState } from "react";
+import {
+  searchDrugByKeyword,
+  searchSpellingSuggestions,
+} from "../api/searchDrugs";
 
 const DrugSearchPage = () => {
   async function fetchData(kw: string) {
     if (!kw) return [];
+    const resp_set = {
+      list: [],
+      sugg_list: [],
+    };
     const resp = await searchDrugByKeyword(kw);
-    // console.log(resp);
-    const listitem = resp.drugGroup.conceptGroup.filter(
+    const listitem = resp.drugGroup.conceptGroup?.filter(
       (x: any) => x.tty === "SBD"
     );
-    const list = listitem.at(0)?.conceptProperties;
-    return list ?? [];
+    const list = listitem?.at(0)?.conceptProperties;
+
+    if (!list) {
+      const sugg_resp = await searchSpellingSuggestions(keyword);
+      const sugg_list = sugg_resp.suggestionGroup?.suggestionList?.suggestion;
+      resp_set.sugg_list = sugg_list;
+    } else {
+      resp_set.list = list;
+    }
+
+    return resp_set;
   }
 
   const [keyword, setKeyword] = useState("cymbalta");
   const [list, setList] = useState([]);
+  const [suggestionList, setSuggestionList] = useState([]);
+  const formRef = useRef<HTMLFormElement>();
 
   return (
-    <div>
-      <h1>Search Drugs</h1>
+    <div className="container mx-auto space-y-6">
+      <h1 className="text-3xl font-bold">Search Drugs</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          fetchData(keyword).then(setList);
+          fetchData(keyword).then((res: any) => {
+            if (res.list) setList(res.list);
+            if (res.sugg_list) setSuggestionList(res.sugg_list);
+          });
+        }}
+        ref={(r) => {
+          if (r) formRef.current = r;
         }}
         className="flex items-center gap-4"
       >
@@ -32,7 +53,7 @@ const DrugSearchPage = () => {
           type="text"
           name=""
           id=""
-          className="w-full px-4 py-1 rounded-md"
+          className="w-full px-4 py-1 rounded-md shadow-md border border-gray-100"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value || "")}
         />
@@ -43,26 +64,37 @@ const DrugSearchPage = () => {
           Search
         </button>
       </form>
+      <div className="w-full flex gap-4 flex-wrap">
+        {suggestionList.map((val: string) => (
+          <button
+            onClick={() => {
+              setKeyword(val);
+              fetchData(val).then((res: any) => {
+                if (res.list) setList(res.list);
+                if (res.sugg_list) setSuggestionList(res.sugg_list);
+              });
+            }}
+            key={val}
+            className="cursor-pointer bg-indigo-500 text-white text-sm px-4 py-1 rounded-full"
+          >
+            {val}
+          </button>
+        ))}
+      </div>
+
       {/* {JSON.stringify(list)} */}
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-4 gap-3">
         {list.map((val: any) => (
           <a
-            className="w-full h-auto py-6 flex flex-col items-start justify-start"
+            key={val.rxcui}
+            className="w-full h-auto flex flex-col items-start justify-start bg-indigo-50 px-3 py-3 rounded-lg hover:bg-indigo-100 space-y-3"
             href={`/drugs/${val.rxcui}`}
           >
-            <h2>{val.name}</h2>
-            <p>{val.synonym}</p>
+            <h2 className="font-semibold text-sm">{val.synonym}</h2>
+            <p className="font-thin text-xs">{val.name}</p>
           </a>
         ))}
       </div>
-      {/* <ComboBox
-        values={[]}
-        query={keyword}
-        setQuery={setKeyword}
-        onSelectedChange={(val) => {
-          console.log(val);
-        }}
-      /> */}
     </div>
   );
 };
