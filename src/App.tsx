@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  createBrowserRouter,
+  RouterProvider,
+  redirect,
+} from "react-router-dom";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Pages
+import DrugSearchPage from "./pages/DrugSearchPage";
+import DrugViewPage from "./pages/DrugViewPage";
+import React from "react";
 
+// const baseLoader = () => {
+//   return redirect("/drugs/search");
+// };
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <MainPage />,
+    // loader: baseLoader,
+    // children: [
+    //   {
+    //     path: "/drugs/search",
+    //     element: <DrugSearchPage />,
+    //     // loader: teamLoader,
+    //   },
+    //   {
+    //     path: "/drugs/:id",
+    //     element: <DrugViewPage />,
+    //   },
+    // ],
+  },
+  {
+    path: "/drugs",
+    children: [
+      {
+        path: "search",
+        element: <DrugSearchPage />,
+      },
+      {
+        path: ":id",
+        element: <DrugViewPage />,
+      },
+    ],
+  },
+]);
+
+function MainPage() {
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <main>
+      <h2>XoGene - RxCui Search</h2>
+      <a
+        className="px-4 py-1 rounded-md bg-indigo-600 text-white font-semibold"
+        href="/drugs/search"
+      >
+        Search for a drug
+      </a>
+    </main>
+  );
 }
 
-export default App
+function App() {
+  return <RouterProvider router={router} />;
+}
+
+export default App;
